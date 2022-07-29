@@ -1,0 +1,16 @@
+{
+  "name": "workspace-webhook-demo",
+  "version": "1.0.0",
+  "description": "Sample code for Sketch Workspaces",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Ale Muñoz",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}
