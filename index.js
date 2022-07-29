@@ -11,9 +11,9 @@ app.get("/", function (request, response) {
 app.post("/", function (request, response) {
   console.log("POST received from Sketch Workspace. Analyzing last update:");
   // We can now download the document from the workspace
-  const SKETCH_TOKEN = process.env.SECRET;
-  const WORKSPACE_ID_CSM = process.env.WS_ID;
-  const DOCUMENT_ID = process.env.DOC_ID;
+  const SKETCH_TOKEN = process.env.SKETCH_TOKEN;
+  const WORKSPACE_ID = process.env.WORKSPACE_ID;
+  const DOCUMENT_ID = process.env.DOCUMENT_ID;
 
   client.getDocuments(WORKSPACE_ID_CSM, SKETCH_TOKEN).then((docArray) => {
     //console.log(`${docArray.length} documents in Workspace`)
