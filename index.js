@@ -1,67 +1,107 @@
-const client = require("./src/workspace-client.js");
-const fetch = require("node-fetch");
+const fetch = require('node-fetch')
+const express = require('express')
+const fs = require('fs')
+const path = require('path')
 
-const express = require("express");
-const app = express();
-app.use(express.json());
+const SKETCH_TOKEN = process.env.SECRET
+const DOCUMENT_ID = process.env.DOC_ID
 
-app.get("/", function (request, response) {
-  response.send("Sketch Workspace Webhook Demo");
-});
+const app = express()
 
-app.post("/", function (request, response) {
-  console.log("POST received from Sketch Workspace. Yay 🎉");
+// We need to set the content-type header to application/json
+// otherwise the request body will not be parsed:
+app.use(
+  express.json({
+    type: () => true,
+  })
+)
 
-  // We can now download the document from the workspace
-  const SKETCH_TOKEN = process.env.SECRET;
-  const WORKSPACE_ID = process.env.WS_ID;
-  const DOCUMENT_ID = process.env.DOC_ID;
+app.post('/', function (req, res) {
+  console.log('POST received from Sketch Workspace 🎉')
 
-  //console.log(request.body);
-
-  client.getDocuments(WORKSPACE_ID, SKETCH_TOKEN).then((docArray) => {
-    console.log(`There are ${docArray.length} documents in your workspace`);
-    const doc = docArray.find((doc) => doc.id == DOCUMENT_ID);
-    console.log(
-      `We're interested in "${doc.name}", so let's check its updates:`
-    );
-    client.getUpdatesForDocument(doc, SKETCH_TOKEN).then((updates) => {
-      console.log(`Document has ${updates.length} updates.`);
-      const unprocessedUpdates = updates.filter(
-        (update) => update.state == "PROCESSING"
-      );
-      const lastProcessedUpdate = updates
-          .reverse()
-          .find((update) => update.state === "FINISHED");
-      if (unprocessedUpdates.length > 0) {
-        console.log(`We haven't processed all updates`);
-        console.log(`So we need to ask the server to export the assets`)
-        // I still don't know what all of this means, to be honest
-        //const firstUnprocessedUpdate = unprocessedUpdates[0];
-        const exportableAssetsURL = lastProcessedUpdate._links.export.url;
-        console.log(`Sending a POST request to ${exportableAssetsURL}`);
-        fetch(exportableAssetsURL, {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${SKETCH_TOKEN}`,
-          },
-        })
-          .then((res) => res.json())
-          .then((json) => {
-            console.log(json);
-          });
-      } else {
-        // All updates are processed, so we can download the last one:
-        console.log(`All updates are processed`);
+  const event = req.body.events[0]
+  let documentID = ''
+  switch (event.object) {
+    case 'document_created_event':
+      // We're not really interested in this event for this demo,
+      // but you can use it to do things like post a notification
+      // to your #design Slack channel whenever a new document is
+      // created in your Workspace.
+      console.log('Document created')
+      documentID = event._links.document.url.split('/').pop()
+      console.log(`Document ID: ${documentID}`)
+      break
+    case 'update_created_event':
+      // When a new update is created, we'll ask Sketch Cloud for
+      // it's exportable assets:
+      console.log('Document updated')
+      documentID = event._links.document.url.split('/').pop()
+      // To keep things under control, we're only doing this for
+      // the document we're interested in. But of course you can do this
+      // for any and all documents.
+      if (documentID == DOCUMENT_ID) {
+        // To get the assets for a document, we need to POST to the
+        // export endpoint defined in the event's links object.
+        // We still have the issue of the export endpoint not being
+        // usable until the update has been processed. This is something
+        // that we'll need to address on the backend (don't trigger this event
+        // until the update has been processed). Meanwhile, we can maybe
+        // try delaying the request for a few seconds?
         console.log(
-          `We can now download the assets from ${lastProcessedUpdate._links.download.url}`
-        );
-        client.downloadUpdates(lastProcessedUpdate._links.download.url, './downloads', SKETCH_TOKEN)
+          `Asking the server for assets for document ${documentID} in 5 seconds...`
+        )
+        setTimeout(function () {
+          console.log(`Requesting assets`)
+          const exportAssetsURL = event._links.export.url
+          fetch(exportAssetsURL, {
+            method: 'POST',
+            headers: {
+              Authorization: `Basic ${SKETCH_TOKEN}`,
+            },
+          })
+            .then(res => res.json())
+            .then(json => {
+              console.log(json)
+              // if (json.errors.length > 0) {
+              // Update is not yet processed. Try again in a few seconds.
+              // console.log(
+              // "Update is not yet processed. Try again in a few seconds."
+              // );
+              // }
+            })
+        }, 5000)
       }
-    });
-  });
-});
+      break
+    case 'export_completed_event':
+      console.log(
+        `Export completed, downloading assets from: ${event.download.url}`
+      )
+      const downloadURL = new URL(event.download.url)
+      fetch(downloadURL.href)
+        .then(
+          res =>
+            new Promise((resolve, reject) => {
+              const savepath = path.resolve(
+                __dirname,
+                './downloads/',
+                downloadURL.pathname.split('/').pop()
+              )
+              const dest = fs.createWriteStream(savepath)
+              res.body.pipe(dest)
+              res.body.on('end', () => {
+                console.log(`Assets saved to ${savepath}`)
+                resolve(savepath)
+              })
+              dest.on('error', reject)
+            })
+        )
+        .catch(err => {
+          console.log(err)
+        })
+      break
+  }
+})
 
 const listener = app.listen(process.env.PORT, function () {
-  console.log("Your app is listening on port " + listener.address().port);
-});
+  console.log('Your app is listening on port ' + listener.address().port)
+})
