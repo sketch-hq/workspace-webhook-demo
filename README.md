@@ -1,15 +1,16 @@
 # Workspace Webhook Demo
 
-Sample code that shows how to use the webhook feature in Sketch Workspaces
+If you've ever wanted to automate asset distribution, you've come to the right place.
 
-## Disclaimer
+Using Webhooks and Sketch Cloud API, we'll show you how to download the exportable assets from a Workspace document as soon as it's saved.
 
-This is a work in progress
+## Disclaimer: This is a work in progress
 
 ## Usage
 
-You need to define these environment variables, using your preferred secret management system:
+1. Deploy this project to a server (we've used and enjoyed <https://glitch.com> when building this demo). Make a note of the public URL of the server because you'll need it to create a Webhook later on.
+2. Create a Sketch Workspace (you can use a free trial if you don't have one)
+3. Define these environment variables:
 
 - `SKETCH_TOKEN`: The token you need to access your Workspace documents. Get yours at <https://www.sketch.com/settings/access-tokens>
-- `WORKSPACE_ID`: The ID of the Workspace you're connecting with
-- `DOCUMENT_ID`: The ID of a document you want to monitor for changes. You can access all documents using the API, this is just a way to limit the scope of what we're doing in this demo
+- `DOCUMENT_ID`: The ID of the document you want to use. You can access all Workspace documents using the API, but we'll limit the scope of what we're doing in this demo
