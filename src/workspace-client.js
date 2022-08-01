@@ -14,7 +14,6 @@ async function getDocuments(workspace_id, token) {
         Authorization: `Basic ${token}`,
       },
     });
-    console.log(response.status);
     let { data, meta } = await response.json();
     data.forEach((doc) => {
       allDocuments.push(doc);
@@ -26,6 +25,29 @@ async function getDocuments(workspace_id, token) {
     }
   }
   return allDocuments;
+}
+
+async function getUpdatesForDocument(doc, token) {
+  let URL = doc._links.updates.url;
+  let allUpdates = [];
+  let moreDataAvailable = true;
+  while (moreDataAvailable) {
+    const response = await fetch(URL, {
+      headers: {
+        Authorization: `Basic ${token}`,
+      },
+    });
+    let { data, meta } = await response.json();
+    data.forEach((update) => {
+      allUpdates.push(update);
+    });
+    if (meta.pagination._links.has_next_page == true) {
+      URL = meta.pagination._links.next.url;
+    } else {
+      moreDataAvailable = false;
+    }
+  }
+  return allUpdates;
 }
 
 async function getAllDocumentFiles(workspace_id, token) {
@@ -44,6 +66,35 @@ async function getAllDocumentFilesSync(workspace_id, token) {
     allPaths.push(getDocumentFileSync(doc, token));
   });
   return allPaths;
+}
+
+async function downloadUpdates(url, destination, token) {
+  await fetch(url, {
+    headers: { Authorization: `Basic ${token}` },
+  })
+    .then((res) => res.json())
+    .then((json) => {
+      console.log(`Redirects to:`);
+      console.log(json.data.url);
+      if (json.data && json.data.url) {
+        fetch(json.data.url)
+          .then(
+            (res) =>
+              new Promise((resolve, reject) => {
+                let path = destination + `/assets.zip`;
+                const dest = fs.createWriteStream(path);
+                res.body.pipe(dest);
+                res.body.on("end", () => {
+                  resolve(path);
+                });
+                dest.on("error", reject);
+              })
+          )
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+    });
 }
 
 async function getDocumentFile(doc, token) {
@@ -85,7 +136,6 @@ async function getDocumentFile(doc, token) {
                           })
                       )
                       .catch((err) => {
-                        console.log(err);
                         reject(err);
                       });
                   }
@@ -97,7 +147,6 @@ async function getDocumentFile(doc, token) {
           }
         })
         .catch((err) => {
-          console.log(err);
           reject(err);
         });
     } else {
@@ -146,16 +195,19 @@ async function getDocumentFileSync(doc, token) {
                     )
                     .catch((err) => {
                       console.log(err);
+                      //reject(err)
                     });
                 }
               });
           }
         } else {
           console.log(`No updates for "${name}"`);
+          //resolve(null)
         }
       })
       .catch((err) => {
         console.log(err);
+        //reject(err)
       });
     return path;
   }
@@ -163,8 +215,10 @@ async function getDocumentFileSync(doc, token) {
 
 module.exports = {
   getDocuments,
+  getUpdatesForDocument,
   getDocumentFile,
   getDocumentFileSync,
   getAllDocumentFiles,
   getAllDocumentFilesSync,
+  downloadUpdates,
 };
