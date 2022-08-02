@@ -11,7 +11,7 @@ You can use this technique as the foundation of a fully automated workflow for y
 
 ## Disclaimer
 
-This demo is not meant to be a complete solution. You'll need to implement your own logic to handle the different scenarios.
+This demo is not meant to be a complete solution. You'll need to implement your own logic to handle the different scenarios. We've added comments in the code to help you get started, and are always happy to help you if you need a hand.
 
 The public Cloud API and the webhook feature are still in alpha, with limited availability. Reach out to your Sketch CSM, or get in touch with us at <developer@sketch.com> if you're interested in using the API.
 
@@ -28,6 +28,6 @@ The public Cloud API and the webhook feature are still in alpha, with limited av
 
 Once you've set everything up, you can trigger the webhook by opening the document in Sketch and saving it. You should see some output in the server console that confirms that the webhook worked. If you defined some layers as exportable in the document, the server will then download a ZIP file with all the assets from that document.
 
-From there, you can use the ZIP file to import the assets into your own project, but that is left as an exercise for the reader. We've added comments in the code to help you get started.
+From there, you can use the ZIP file to import the assets into your own project, but that is left as an exercise for the reader.
 
 Have fun, and let us know in the issues section if you have any questions or feedback.
