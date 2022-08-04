@@ -1,6 +1,6 @@
 # Workspace Webhook Demo
 
-This demo uses Webhooks and Sketch's public Cloud API to automate asset exporting. We'll show you how to download the exportable assets from a Workspace document as soon as it's saved, without user intervention.
+This demo shows how to automate asset exporting with Sketch's Cloud API, using a [webhook](https://en.wikipedia.org/wiki/Webhook). We'll download the exportable assets from a Workspace document as soon as it's saved, without user intervention.
 
 You can use this technique as the foundation of a fully automated workflow for your own projects. Some examples of this are:
 
@@ -18,13 +18,12 @@ The public Cloud API and the webhook feature are still in alpha, with limited av
 ## Usage
 
 1. Deploy this project to a server that's reachable from the internet. We've used and enjoyed <https://glitch.com> when building this demo, and it should work out of the box. Make a note of the public URL of the server because you'll need it to create a Webhook later on.
-1. Create a Sketch Workspace (you can use a free trial if you don't have one).
-1. Open <https://sketch.com>, log in to your Workspace, and go to People & Settings › Settings › Advanced. Fill in the URL of your server in the “Webhook URL” field.
+1. [Create a Sketch Workspace](https://www.sketch.com/docs/workspaces/get-started/) (you can use a free trial if you don't have one).
+1. Once logged in to your Workspace, go to People & Settings › Settings › Advanced. Fill in the URL of your server in the “Webhook URL” field.
 1. Generate a personal access token to access the API. You can get it at <https://www.sketch.com/settings/access-tokens>.
 1. Define these environment variables using your favorite secret management system:
-
-- `SKETCH_TOKEN`: The personal access token you generated earlier.
-- `DOCUMENT_ID`: The ID of the document you want to use for the demo. You can get that from the URL of the document when you view it in your browser. The URL looks like `https://www.sketch.com/s/63f8dbd4-141d-4459-8e90-26269c87d120`, where `63f8dbd4-141d-4459-8e90-26269c87d120` is the document ID. You can access all Workspace documents using the API, but we'll limit the scope of what we're doing in this demo
+    - `SKETCH_TOKEN`: The personal access token you generated earlier.
+    - `DOCUMENT_ID`: The ID of the document you want to use for the demo. You can get that from the URL of the document when you view it in your browser. The URL looks like `https://www.sketch.com/s/63f8dbd4-141d-4459-8e90-26269c87d120`, where `63f8dbd4-141d-4459-8e90-26269c87d120` is the document ID. You can access all Workspace documents using the API, but we'll limit the scope of what we're doing in this demo
 
 Once you've set everything up, you can trigger the webhook by opening the document in Sketch and saving it. You should see some output in the server console that confirms that the webhook worked. If you defined some layers as exportable in the document, the server will then download a ZIP file with all the assets from that document.
 
